@@ -1,0 +1,19 @@
+{
+  "projects": [
+    {
+      "name": "Project name",
+      "repoPath": "C:\\Users\\PC\\dev\\project-name",
+      "envs": [
+        "dev",
+        "stage",
+        "dev-final",
+        "stage-final"
+      ],
+      "deployTypes": [
+        "api",
+        "webapp",
+        "all"
+      ]
+    }
+  ]
+}
