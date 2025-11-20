@@ -85,6 +85,16 @@
                 <option value="">Select type...</option>
               </select>
             </div>
+
+            <div class="form-group">
+              <label for="commitTemplate">Commit format</label>
+              <input type="text" id="commitTemplate" class="form-control" placeholder="deploy: {env}, {type}" value="deploy: {env}, {type}" disabled>
+            </div>
+
+            <div class="form-group">
+              <label for="fileContentTemplate">File content format</label>
+              <input type="text" id="fileContentTemplate" class="form-control" placeholder="deploy: {env}, {type}" value="deploy: {env}, {type}" disabled>
+            </div>
           </div>
 
           <div class="form-row">
@@ -151,6 +161,47 @@
               <div class="form-group">
                 <label for="deployTypes">Deploy Types (comma separated) *</label>
                 <input type="text" id="deployTypes" class="form-control" placeholder="api, webapp, all">
+              </div>
+
+              <div class="form-group">
+                <label for="projectCommitFormat">Commit Format *</label>
+                <div class="select-with-input">
+                  <select id="projectCommitFormat" class="form-control">
+                    <option value="v1" selected>V1</option>
+                    <option value="v2">V2</option>
+                    <option value="custom">custom</option>
+                  </select>
+                  <input type="text" id="projectCommitTemplate" class="form-control" placeholder="deploy: {env}, {type}" disabled>
+                  <div class="note-box">
+                    <span>Note:</span>
+                    <ul>
+                      <li><code>{env}</code> Environments (e.g., dev, stage)</li>
+                      <li><code>{type}</code> Deploy types (e.g., api, webapp)</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="projectFileContentFormat">CICD file content format *</label>
+                <div class="select-with-input">
+                  <select id="projectFileContentFormat" class="form-control">
+                    <option value="default" selected>Using commit message</option>
+                    <option value="custom">custom</option>
+                  </select>
+                  <input type="text" id="projectFileContentTemplate" class="form-control" placeholder="File content format..." value="deploy: {env}, {type}" disabled>
+                  <div class="note-box">
+                    <span>Note:</span>
+                    <ul>
+                      <li><code>{env}</code> Environments (e.g., dev, stage)</li>
+                      <li><code>{type}</code> Deploy types (e.g., api, webapp)</li>
+                      <li><code>{date:y-m-d}</code> Deployment date (e.g., 2024-06-01)</li>
+                      <li><code>{date:d-m-y}</code> Deployment date (e.g., 01-06-2024)</li>
+                      <li><code>{date:y/m/d}</code> Deployment date (e.g., 2024/06/01)</li>
+                      <li><code>{date:d/m/y}</code> Deployment date (e.g., 01/06/2024)</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">

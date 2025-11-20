@@ -13,7 +13,12 @@
         "api",
         "webapp",
         "all"
-      ]
+      ],
+      "branchFilter": "",
+      "commitFormat": "v1",
+      "commitTemplate": "deploy: {env}, {type}",
+      "fileContentFormat": "default",
+      "fileContentTemplate": "deploy: {env}, {type}"
     }
   ]
 }

@@ -2,14 +2,16 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
+import { ProjectI } from './interface';
 
 export interface DeployOptions {
-  project: string;
+  project: ProjectI;
   branch: string;
   env: string;
   type: string;
-  repoPath: string;
   dryRun: boolean;
+  commitTemplate: string;
+  fileContentTemplate: string;
   isAutomatic?: boolean; // Flag for auto-deploy
 }
 
@@ -67,22 +69,47 @@ export class DeployService {
     }
   }
 
-  private getCommitMsg(env: string, type: string): string {
-    const commitPostfix = (type === 'all') ?  '' : `, ${type}`;
-    return `deploy: ${env}${commitPostfix}`;
+  private getCommitMsg(commitTemplate: string, env: string, type: string): string {
+    let commitMessage = commitTemplate;
+    if (type === 'all') {
+      commitMessage = commitMessage.replace(/\{type\}\s*,\s*|\s*,\s*\{type\}/gi, "");
+    }
+
+    return commitMessage
+      .replace('{env}', env)
+      .replace('{type}', type);
+  }
+
+  private getFileContent(fileContentTemplate: string, env: string, type: string): string {
+    let fileContent = fileContentTemplate;
+    if (type === 'all') {
+      fileContent = fileContent.replace(/\{type\}\s*,\s*|\s*,\s*\{type\}/gi, "");
+    }
+    const now = new Date();
+    const dateDMY = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`
+    const dateYMD = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
+    return fileContent
+      .replace('{date:y-m-d}', dateYMD)
+      .replace('{date:y/m/d}', dateYMD)
+      .replace('{date:d-m-y}', dateDMY)
+      .replace('{date:d/m/y}', dateDMY)
+      .replace('{env}', env)
+      .replace('{type}', type);
   }
 
   async deploy(options: DeployOptions): Promise<DeployResult> {
     const logs: string[] = [];
-    const { project, branch, env, type, repoPath, dryRun } = options;
+    const { project, branch, env, type, dryRun, commitTemplate, fileContentTemplate } = options;
+    const repoPath = project.repoPath;
 
     try {
-      this.log(`🚀 Starting deploy for ${project} (${env}) [${type}]`, logs);
+      this.log('=========================================================', logs);
+      this.log(`🚀 Starting deploy for ${project.name} (${env}) [${type}]`, logs);
       this.log(`Repo path: ${repoPath}`, logs);
       this.log(`Branch: ${branch}`, logs);
       
       if (dryRun) {
-        this.log('⚠️  Running in DRY-RUN mode (will not push to remote)', logs);
+        this.log('⚠️ Running in DRY-RUN mode (will not push to remote)', logs);
       }
 
       // Check if repo path exists
@@ -91,12 +118,8 @@ export class DeployService {
       }
 
       // Git operations
-      if (!this.runCommand('git stash', repoPath, logs)) {
+      if (!this.runCommand('git stash save "Auto stash before deploy"', repoPath, logs)) {
         throw new Error('Git stash failed');
-      }
-
-      if (!this.runCommand('git fetch', repoPath, logs)) {
-        throw new Error('Git fetch failed');
       }
 
       const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: repoPath, encoding: 'utf8' }).toString().trim();
@@ -111,15 +134,16 @@ export class DeployService {
       }
 
       // Update CICD.txt
-      const commitMsg = this.getCommitMsg(env, type);
-      this.updateCICDFile(repoPath, commitMsg);
-      this.log(`✓ Added to ${this.cicdFileName}: ${commitMsg}`, logs);
-
+      const cicdFileContent = this.getFileContent(fileContentTemplate, env, type);
+      this.updateCICDFile(repoPath, cicdFileContent);
+      this.log(`✓ Added to ${this.cicdFileName}: ${cicdFileContent}`, logs);
+      
       // Commit
       if (!this.runCommand(`git add ${this.cicdFileName}`, repoPath, logs)) {
         throw new Error('Git add failed');
       }
-
+      
+      const commitMsg = this.getCommitMsg(commitTemplate, env, type);
       if (!this.runCommand(`git commit -m "${commitMsg}"`, repoPath, logs)) {
         throw new Error('Git commit failed');
       }
