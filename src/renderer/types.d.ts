@@ -1,6 +1,11 @@
 // Type declarations for renderer process
 interface Window {
   api: {
+    onUpdateDownloadStarted: (data: any) => void;
+    onUpdateDownloadProgress: (data: any) => void;
+    onUpdateDownloaded: (data: any) => void;
+    onUpdateError: (data: any) => void;
+
     // Config operations
     loadConfig: () => Promise<any>;
     saveConfig: (config: any) => Promise<{ success: boolean; error?: string }>;

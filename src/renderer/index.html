@@ -268,6 +268,66 @@
     </main>
   </div>
 
+  <div id="updateModal" class="update-modal" style="display: none;">
+    <div class="update-modal-content">
+      <div class="update-modal-header">
+        <h3>
+          <span class="update-spinner"></span>
+          Downloading update...
+        </h3>
+      </div>
+      
+      <div class="update-modal-body">
+        <p id="updateVersionInfo" class="update-version">Version: <strong>-</strong></p>
+        
+        <div class="update-progress-container">
+          <div id="updateProgressBar" class="update-progress-bar">0%</div>
+        </div>
+
+        <div class="update-stats-grid">
+          <div class="update-stat-card">
+            <div class="update-stat-label">Downloaded</div>
+            <div class="update-stat-value" id="updateDownloadedSize">0 MB</div>
+          </div>
+          <div class="update-stat-card">
+            <div class="update-stat-label">Total Size</div>
+            <div class="update-stat-value" id="updateTotalSize">0 MB</div>
+          </div>
+          <div class="update-stat-card">
+            <div class="update-stat-label">Speed</div>
+            <div class="update-stat-value" id="updateSpeed">0 MB/s</div>
+          </div>
+          <div class="update-stat-card">
+            <div class="update-stat-label">Progress</div>
+            <div class="update-stat-value" id="updatePercentText">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Success Modal -->
+  <div id="updateSuccessModal" class="update-modal" style="display: none;">
+    <div class="update-modal-content">
+      <div class="update-success-message">
+        <h3>✅ Download Complete!</h3>
+        <p id="updateSuccessVersion">The new version is ready to install.</p>
+        <button id="closeSuccessBtn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Error Modal -->
+  <div id="updateErrorModal" class="update-modal" style="display: none;">
+    <div class="update-modal-content">
+      <div class="update-error-message">
+        <h3>❌ Update Error</h3>
+        <p id="updateErrorMessage">An error occurred while downloading the update.</p>
+        <button id="closeErrorBtn" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Loading Spinner Overlay -->
   <div id="loadingOverlay" class="loading-overlay" style="display: none;">
     <div class="spinner"></div>

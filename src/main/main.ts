@@ -5,6 +5,7 @@ import path from 'node:path';
 import { autoUpdater } from 'electron-updater';
 
 let windowManager: WindowManager;
+let mainWindow: BrowserWindow | null = null;
 
 function createMenu() {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -55,18 +56,73 @@ function createMenu() {
 }
 
 function initAutoUpdate() {
+  autoUpdater.logger = require("electron-log")
   autoUpdater.autoDownload = false;
 
-  autoUpdater.on("update-available", () => {
-    const result = dialog.showMessageBoxSync({
+  autoUpdater.on("checking-for-update", () => {
+    console.log("Checking for updates...");
+  });
+
+  autoUpdater.on("update-not-available", (info) => {
+    console.log("Update not available:", info);
+  });
+
+  autoUpdater.on("update-available", (info) => {
+    console.log("Update available:", info);
+
+    dialog.showMessageBox({
       type: "info",
       title: "Update Available",
       message: "A new version is available. Do you want to download it now?",
-      buttons: ["Yes", "No"]
-    });
+      buttons: ["Yes", "No"],
+      defaultId: 0,
+      cancelId: 1
+    }).then((result) => {
+      if (result.response === 0) {
+        console.log("User chose to download update");
+        autoUpdater.downloadUpdate();
 
-    if (result === 0) {
-      autoUpdater.downloadUpdate();
+        dialog.showMessageBox({
+          type: "info",
+          title: "Downloading Update",
+          message: "Downloading the update. Please wait...",
+          buttons: ["OK"]
+        });
+      }
+    }).catch(err => {
+      console.error("Error showing update dialog:", err);
+    });
+  });
+
+  autoUpdater.on("download-progress", (progressObj) => {
+    // Tính toán các thông số
+    const percent = progressObj.percent.toFixed(2);
+    const downloadedMB = (progressObj.transferred / 1024 / 1024).toFixed(2);
+    const totalMB = (progressObj.total / 1024 / 1024).toFixed(2);
+    const speedMBps = (progressObj.bytesPerSecond / 1024 / 1024).toFixed(2);
+    
+    // Log chi tiết ra console
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`📥 Đang tải xuống cập nhật: ${percent}%`);
+    console.log(`📊 Tiến trình: ${downloadedMB}MB / ${totalMB}MB`);
+    console.log(`⚡ Tốc độ: ${speedMBps} MB/s`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    // Hiển thị progress bar trên taskbar
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setProgressBar(progressObj.percent / 100);
+      mainWindow.setTitle(`Đang tải cập nhật... ${percent}%`);
+      
+      // Gửi tiến trình tới renderer process
+      mainWindow.webContents.send('update-download-progress', {
+        percent: parseFloat(percent),
+        downloadedMB: parseFloat(downloadedMB),
+        totalMB: parseFloat(totalMB),
+        speedMBps: parseFloat(speedMBps),
+        bytesPerSecond: progressObj.bytesPerSecond,
+        transferred: progressObj.transferred,
+        total: progressObj.total
+      });
     }
   });
 
@@ -95,7 +151,7 @@ app.whenReady().then(() => {
   registerIpcHandlers(windowManager);
   createMenu();
   
-  windowManager.createWindow();
+  mainWindow = windowManager.createWindow();
 
   initAutoUpdate();
 
@@ -104,6 +160,11 @@ app.whenReady().then(() => {
       windowManager.createWindow();
     }
   });
+
+  // Check for updates every 4 hours
+  setInterval(() => {
+    autoUpdater.checkForUpdates();
+  }, 4 * 60 * 60 * 1000);
 });
 
 app.on('window-all-closed', () => {

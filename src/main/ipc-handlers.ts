@@ -4,6 +4,7 @@ import path from 'node:path';
 import { WindowManager } from './window-manager';
 import { DeployService, DeployOptions } from './deploy-service';
 import { ConfigI } from './interface';
+import { autoUpdater } from 'electron-updater';
 
 const deployService = new DeployService();
 const userDataPath = app.getPath('userData');
@@ -44,6 +45,14 @@ function getScriptsPath(): string {
 }
 
 export function registerIpcHandlers(windowManager: WindowManager) {
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      const result = await autoUpdater.checkForUpdates();
+      return { success: true, data: result };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
   
   // Load configuration
   ipcMain.handle('load-config', async () => {

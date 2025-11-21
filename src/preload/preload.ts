@@ -3,6 +3,23 @@ import { contextBridge, ipcRenderer } from 'electron';
 // Expose protected methods that allow the renderer process to use
 // ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('api', {
+  // ===== Auto Update APIs =====
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  
+  // Auto update event listeners
+  onUpdateDownloadStarted: (callback: (data: any) => void) => {
+    ipcRenderer.on('update-download-started', (_event, data) => callback(data));
+  },
+  onUpdateDownloadProgress: (callback: (data: any) => void) => {
+    ipcRenderer.on('update-download-progress', (_event, data) => callback(data));
+  },
+  onUpdateDownloaded: (callback: (data: any) => void) => {
+    ipcRenderer.on('update-downloaded', (_event, data) => callback(data));
+  },
+  onUpdateError: (callback: (data: any) => void) => {
+    ipcRenderer.on('update-error', (_event, data) => callback(data));
+  },
+
   // Config operations
   loadConfig: () => ipcRenderer.invoke('load-config'),
   saveConfig: (config: any) => ipcRenderer.invoke('save-config', config),

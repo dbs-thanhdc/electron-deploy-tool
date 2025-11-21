@@ -2,6 +2,7 @@
 
 // Initialize all pages
 document.addEventListener("DOMContentLoaded", () => {
+  initAutoUpdateHandlers();
   initNavigation();
   initTheme();
   initDeployPage();
@@ -727,4 +728,81 @@ async function displayLogDirectory() {
   } catch (err) {
     console.error("Failed to get log directory:", err);
   }
+}
+
+// ===== AUTO UPDATE HANDLERS =====
+function initAutoUpdateHandlers() {
+  const updateModal = document.getElementById('updateModal') as HTMLDivElement;
+  const updateSuccessModal = document.getElementById('updateSuccessModal') as HTMLDivElement;
+  const updateErrorModal = document.getElementById('updateErrorModal') as HTMLDivElement;
+  
+  const closeSuccessBtn = document.getElementById('closeSuccessBtn') as HTMLButtonElement;
+  const closeErrorBtn = document.getElementById('closeErrorBtn') as HTMLButtonElement;
+
+  window.api.onUpdateDownloadStarted((data: any) => {
+    console.log('Download started:', data);
+    
+    updateModal.style.display = 'flex';
+    updateSuccessModal.style.display = 'none';
+    updateErrorModal.style.display = 'none';
+    
+    const versionInfo = document.getElementById('updateVersionInfo') as HTMLParagraphElement;
+    versionInfo.innerHTML = `Phiên bản: <strong>v${data.version}</strong>`;
+    
+    // Reset progress
+    const progressBar = document.getElementById('updateProgressBar') as HTMLDivElement;
+    progressBar.style.width = '0%';
+    progressBar.textContent = '0%';
+  });
+
+  window.api.onUpdateDownloadProgress((data: any) => {
+    console.log('Download progress:', data);
+    
+    const progressBar = document.getElementById('updateProgressBar') as HTMLDivElement;
+    const percentText = document.getElementById('updatePercentText') as HTMLDivElement;
+    const downloadedSize = document.getElementById('updateDownloadedSize') as HTMLDivElement;
+    const totalSize = document.getElementById('updateTotalSize') as HTMLDivElement;
+    const speed = document.getElementById('updateSpeed') as HTMLDivElement;
+
+    // Cập nhật progress bar
+    progressBar.style.width = data.percent + '%';
+    progressBar.textContent = data.percent.toFixed(1) + '%';
+
+    // Cập nhật các số liệu
+    percentText.textContent = data.percent.toFixed(1) + '%';
+    downloadedSize.textContent = data.downloadedMB.toFixed(2) + ' MB';
+    totalSize.textContent = data.totalMB.toFixed(2) + ' MB';
+    speed.textContent = data.speedMBps.toFixed(2) + ' MB/s';
+  });
+
+  // Lắng nghe sự kiện tải xuống hoàn tất
+  window.api.onUpdateDownloaded((data: any) => {
+    console.log('Download completed:', data);
+    
+    updateModal.style.display = 'none';
+    updateSuccessModal.style.display = 'flex';
+    
+    const successVersion = document.getElementById('updateSuccessVersion') as HTMLParagraphElement;
+    successVersion.textContent = `Phiên bản v${data.version} đã sẵn sàng để cài đặt. Ứng dụng sẽ tự động cài đặt khi bạn đóng.`;
+  });
+
+  // Lắng nghe lỗi
+  window.api.onUpdateError((data: any) => {
+    console.error('Update error:', data);
+    
+    updateModal.style.display = 'none';
+    updateErrorModal.style.display = 'flex';
+    
+    const errorMessage = document.getElementById('updateErrorMessage') as HTMLParagraphElement;
+    errorMessage.textContent = data.message || 'Đã xảy ra lỗi không xác định khi tải xuống cập nhật.';
+  });
+
+  // Close button handlers
+  closeSuccessBtn.addEventListener('click', () => {
+    updateSuccessModal.style.display = 'none';
+  });
+
+  closeErrorBtn.addEventListener('click', () => {
+    updateErrorModal.style.display = 'none';
+  });
 }
