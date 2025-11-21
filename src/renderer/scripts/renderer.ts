@@ -149,16 +149,22 @@ function setupDeployEventListeners() {
   const typeSelect = document.getElementById("typeSelect") as HTMLSelectElement;
   const deployBtn = document.getElementById("deployBtn") as HTMLButtonElement;
   const clearLogBtn = document.getElementById("clearLogBtn") as HTMLButtonElement;
+  const commitTemplate = document.getElementById("commitTemplate") as HTMLInputElement;
+  const fileContentTemplate = document.getElementById("fileContentTemplate") as HTMLInputElement;
 
   projectSelect.addEventListener("change", async () => {
     const projectName = projectSelect.value;
     if (!projectName) {
-      branchSelect.disabled = true;
-      envSelect.disabled = true;
-      typeSelect.disabled = true;
-      deployBtn.disabled = true;
       return;
     }
+
+    // Clear and disable dependent selects
+    branchSelect.disabled = true;
+    envSelect.disabled = true;
+    typeSelect.disabled = true;
+    deployBtn.disabled = true;
+    commitTemplate.disabled = true;
+    fileContentTemplate.disabled = true;
 
     const project = currentConfig.projects.find((p: any) => p.name === projectName);
     if (!project) return;
@@ -202,6 +208,12 @@ function setupDeployEventListeners() {
       typeSelect.appendChild(option);
     });
     typeSelect.disabled = false;
+
+    // Set commit and file content templates
+    commitTemplate.value = project.commitTemplate;
+    commitTemplate.disabled = false;
+    fileContentTemplate.value = project.fileContentTemplate;
+    fileContentTemplate.disabled = false;
 
     updateDeployButtonState();
   });
@@ -298,6 +310,8 @@ async function handleDeploy() {
   const envSelect = document.getElementById("envSelect") as HTMLSelectElement;
   const typeSelect = document.getElementById("typeSelect") as HTMLSelectElement;
   const dryRunCheck = document.getElementById("dryRunCheck") as HTMLInputElement;
+  const commitTemplateInput = document.getElementById("commitTemplate") as HTMLInputElement;
+  const fileContentTemplateInput = document.getElementById("fileContentTemplate") as HTMLInputElement;
   const logOutput = document.getElementById("deployLog") as HTMLDivElement;
   const loadingOverlay = document.getElementById("loadingOverlay") as HTMLDivElement;
 
@@ -306,6 +320,8 @@ async function handleDeploy() {
   const env = envSelect.value;
   const type = typeSelect.value;
   const dryRun = dryRunCheck.checked;
+  const commitTemplate = commitTemplateInput.value;
+  const fileContentTemplate = fileContentTemplateInput.value;
 
   // Check if can deploy
   const canDeploy = await window.api.canDeploy(projectName);
@@ -319,7 +335,7 @@ async function handleDeploy() {
 
   const confirm = await window.api.openDialogConfirm({
     title: "Confirm Deploy",
-    message: `Are you sure you want to deploy project "${projectName}" to environment "${env}" with type "${type}"?`,
+    message: `Deploy project "${projectName}" to environment "${env}" with type "${type}"?`,
   });
   if (!confirm) return;
 
@@ -330,12 +346,13 @@ async function handleDeploy() {
 
   try {
     const result = await window.api.startDeploy({
-      project: projectName,
+      project,
       branch,
       env,
       type,
-      repoPath: project.repoPath,
       dryRun,
+      commitTemplate,
+      fileContentTemplate,
     });
 
     // Display logs
@@ -418,6 +435,9 @@ function renderProjectsList() {
         <div class="project-detail"><strong>Path:</strong> ${project.repoPath}</div>
         <div class="project-detail"><strong>Environments:</strong> ${project.envs.join(", ")}</div>
         <div class="project-detail"><strong>Deploy Types:</strong> ${project.deployTypes.join(", ")}</div>
+        <div class="project-detail"><strong>Branch filter:</strong> ${project.branchFilter}</div>
+        <div class="project-detail"><strong>Commit Template:</strong> ${project.commitTemplate}</div>
+        <div class="project-detail"><strong>File Content Template:</strong> ${project.fileContentTemplate}</div>
       </div>
     `;
     container.appendChild(card);
@@ -444,11 +464,15 @@ function setupProjectsEventListeners() {
   const cancelBtn = document.getElementById("cancelFormBtn") as HTMLButtonElement;
   const saveBtn = document.getElementById("saveProjectBtn") as HTMLButtonElement;
   const browseBtn = document.getElementById('browseRepoBtn') as HTMLButtonElement;
+  const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
+  const fileContentFormatSelect = document.getElementById("projectFileContentFormat") as HTMLSelectElement;
   
   addBtn.addEventListener("click", showAddForm);
   cancelBtn.addEventListener("click", hideForm);
   saveBtn.addEventListener("click", saveProject);
   browseBtn.addEventListener('click', handleBrowseRepo);
+  commitFormatSelect.addEventListener("change", handleCommitFormatSelectChange);
+  fileContentFormatSelect.addEventListener("change", handleFileContentFormatSelectChange);
 }
 
 function showAddForm() {
@@ -476,6 +500,20 @@ function editProject(index: number) {
   (document.getElementById("repoPath") as HTMLInputElement).value = project.repoPath;
   (document.getElementById("envs") as HTMLInputElement).value = project.envs.join(", ");
   (document.getElementById("deployTypes") as HTMLInputElement).value = project.deployTypes.join(", ");
+  (document.getElementById("projectBranchFilter") as HTMLInputElement).value = project.branchFilter;
+  const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
+  commitFormatSelect.value = project.commitFormat || "v1";
+
+  const commitTemplateInput = document.getElementById("projectCommitTemplate") as HTMLInputElement;
+  commitTemplateInput.value = project.commitTemplate || "";
+  commitTemplateInput.disabled = commitFormatSelect.value !== 'custom';
+
+  const fileContentFormatSelect = document.getElementById("projectFileContentFormat") as HTMLSelectElement;
+  fileContentFormatSelect.value = project.fileContentFormat || "";
+  
+  const fileContentTemplateInput = document.getElementById("projectFileContentTemplate") as HTMLInputElement;
+  fileContentTemplateInput.value = project.fileContentTemplate || "";
+  fileContentTemplateInput.disabled = fileContentFormatSelect.value !== 'custom';
 
   formContainer.style.display = "block";
   formContainer.scrollIntoView({ behavior: "smooth" });
@@ -512,9 +550,13 @@ async function saveProject() {
   const envsStr = (document.getElementById("envs") as HTMLInputElement).value.trim();
   const typesStr = (document.getElementById("deployTypes") as HTMLInputElement).value.trim();
   const branchFilterStr = (document.getElementById("projectBranchFilter") as HTMLInputElement).value.trim();
+  const commitFormat = (document.getElementById("projectCommitFormat") as HTMLSelectElement).value.trim();
+  const commitTemplate = (document.getElementById("projectCommitTemplate") as HTMLInputElement).value.trim();
+  const fileContentFormat = (document.getElementById("projectFileContentFormat") as HTMLSelectElement).value.trim();
+  const fileContentTemplate = (document.getElementById("projectFileContentTemplate") as HTMLInputElement).value.trim();
 
   // Validation
-  if (!name || !repoPath || !envsStr || !typesStr) {
+  if (!name || !repoPath || !envsStr || !typesStr || (commitFormat === "custom" && !commitTemplate)) {
     alert("All fields are required");
     return;
   }
@@ -533,7 +575,17 @@ async function saveProject() {
     return;
   }
 
-  const project = { name, repoPath, envs, deployTypes, branchFilter: branchFilterStr };
+  const project = {
+    name,
+    repoPath,
+    envs,
+    deployTypes,
+    branchFilter: branchFilterStr,
+    commitFormat,
+    fileContentFormat,
+    commitTemplate,
+    fileContentTemplate,
+  };
 
   if (editingProjectIndex !== null) {
     // Edit existing
@@ -558,6 +610,43 @@ async function handleBrowseRepo() {
   const selectedPath = await window.api.openDirectoryDialog();
   if (selectedPath) {
     repoPathInput.value = selectedPath;
+  }
+}
+
+async function handleCommitFormatSelectChange() {
+  const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
+  const commitTemplateInput = document.getElementById("projectCommitTemplate") as HTMLInputElement;
+  const fileContentFormatSelect = document.getElementById("projectFileContentFormat") as HTMLSelectElement;
+  const fileContentTemplateInput = document.getElementById("projectFileContentTemplate") as HTMLInputElement;
+
+  switch (commitFormatSelect.value) {
+    case 'v2':
+      commitTemplateInput.disabled = true;
+      commitTemplateInput.value = "deploy-v2: {env}, {type}";
+      break;
+    case 'custom':
+      commitTemplateInput.disabled = false;
+      break;
+    default:
+      commitTemplateInput.disabled = true;
+      commitTemplateInput.value = "deploy: {env}, {type}";
+      break;
+  }
+
+  if (fileContentFormatSelect.value === 'default') {
+    fileContentTemplateInput.value = commitTemplateInput.value;
+  }
+}
+
+async function handleFileContentFormatSelectChange() {
+  const fileContentFormatSelect = document.getElementById("projectFileContentFormat") as HTMLSelectElement;
+  const fileContentTemplateInput = document.getElementById("projectFileContentTemplate") as HTMLInputElement;
+  
+  if (fileContentFormatSelect.value === 'custom') {
+    fileContentTemplateInput.disabled = false;
+  } else {
+    fileContentTemplateInput.disabled = true;
+    fileContentTemplateInput.value = "deploy: {env}, {type}";
   }
 }
 

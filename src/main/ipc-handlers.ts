@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WindowManager } from './window-manager';
 import { DeployService, DeployOptions } from './deploy-service';
+import { ConfigI } from './interface';
 
 const deployService = new DeployService();
 const userDataPath = app.getPath('userData');
@@ -62,7 +63,17 @@ export function registerIpcHandlers(windowManager: WindowManager) {
         return configDefault;
       }
       const config = fs.readFileSync(scriptsPath, 'utf8');
-      return JSON.parse(config);
+      const scripts: ConfigI = JSON.parse(config);
+      scripts.projects = (scripts.projects || [])
+        .map((project) => {
+          if (!project.branchFilter) project.branchFilter = '';
+          if (!project.commitFormat) project.commitFormat = 'v1';
+          if (!project.commitTemplate) project.commitTemplate = 'deploy: {env}, {type}';
+          if (!project.fileContentFormat) project.fileContentFormat = 'default';
+          if (!project.fileContentTemplate) project.fileContentTemplate = project.commitTemplate;
+          return project;
+        });
+      return scripts;
     } catch (err: any) {
       console.error('Error loading config:', err);
       return { error: err.message };
@@ -100,20 +111,20 @@ export function registerIpcHandlers(windowManager: WindowManager) {
       return { success: false, error: 'Window not found' };
     }
 
-    if (!windowManager.canDeploy(options.project, win.id)) {
+    if (!windowManager.canDeploy(options.project.name, win.id)) {
       return { 
         success: false, 
-        error: `Project ${options.project} is already being deployed in another window` 
+        error: `Project ${options.project.name} is already being deployed in another window` 
       };
     }
 
-    windowManager.setDeploymentActive(options.project, win.id);
+    windowManager.setDeploymentActive(options.project.name, win.id);
     
     try {
       const result = await deployService.deploy(options);
       return result;
     } finally {
-      windowManager.setDeploymentInactive(options.project);
+      windowManager.setDeploymentInactive(options.project.name);
     }
   });
 

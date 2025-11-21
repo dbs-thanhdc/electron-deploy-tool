@@ -228,6 +228,12 @@ input:checked + .toggle-slider:before {
   gap: 8px;
 }
 
+.select-with-input {
+  display: flex;
+  flex-direction: column;  /* Stack vertically */
+  gap: 8px;
+}
+
 .filter-input {
   font-size: 13px;
   padding: 8px 12px;
@@ -260,6 +266,27 @@ input:checked + .toggle-slider:before {
 .form-actions {
   margin-top: 20px;
 }
+
+.note-box {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.note-box ul {
+  list-style: none;
+}
+
+.note-box code {
+  background: var(--bg-tertiary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
 
 /* Buttons */
 .btn {
