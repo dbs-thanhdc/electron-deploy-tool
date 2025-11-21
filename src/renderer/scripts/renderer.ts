@@ -465,9 +465,7 @@ function setupProjectsEventListeners() {
   const saveBtn = document.getElementById("saveProjectBtn") as HTMLButtonElement;
   const browseBtn = document.getElementById('browseRepoBtn') as HTMLButtonElement;
   const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
-  const commitTemplateInput = document.getElementById("projectCommitTemplate") as HTMLInputElement;
   const fileContentFormatSelect = document.getElementById("projectFileContentFormat") as HTMLSelectElement;
-  const fileContentTemplateInput = document.getElementById("projectFileContentTemplate") as HTMLInputElement;
   
   addBtn.addEventListener("click", showAddForm);
   cancelBtn.addEventListener("click", hideForm);
@@ -503,8 +501,19 @@ function editProject(index: number) {
   (document.getElementById("envs") as HTMLInputElement).value = project.envs.join(", ");
   (document.getElementById("deployTypes") as HTMLInputElement).value = project.deployTypes.join(", ");
   (document.getElementById("projectBranchFilter") as HTMLInputElement).value = project.branchFilter;
-  (document.getElementById("projectCommitFormat") as HTMLSelectElement).value = project.commitFormat || "v1";
-  (document.getElementById("projectCommitTemplate") as HTMLInputElement).value = project.commitTemplate || "";
+  const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
+  commitFormatSelect.value = project.commitFormat || "v1";
+
+  const commitTemplateInput = document.getElementById("projectCommitTemplate") as HTMLInputElement;
+  commitTemplateInput.value = project.commitTemplate || "";
+  commitTemplateInput.disabled = commitFormatSelect.value !== 'custom';
+
+  const fileContentFormatSelect = document.getElementById("projectFileContentFormat") as HTMLSelectElement;
+  fileContentFormatSelect.value = project.fileContentFormat || "";
+  
+  const fileContentTemplateInput = document.getElementById("projectFileContentTemplate") as HTMLInputElement;
+  fileContentTemplateInput.value = project.fileContentTemplate || "";
+  fileContentTemplateInput.disabled = fileContentFormatSelect.value !== 'custom';
 
   formContainer.style.display = "block";
   formContainer.scrollIntoView({ behavior: "smooth" });
