@@ -717,6 +717,7 @@ async function selectLogFile(filename: string) {
 // ===== SETTINGS PAGE =====
 async function initSettingsPage() {
   await displayLogDirectory();
+  await displayAppVersion();
 }
 
 async function displayLogDirectory() {
@@ -726,5 +727,17 @@ async function displayLogDirectory() {
     logDirPath.textContent = logDir;
   } catch (err) {
     console.error("Failed to get log directory:", err);
+  }
+}
+
+async function displayAppVersion() {
+  try {
+    const version = await window.api.getAppVersion();
+    const versionElements = document.querySelectorAll('.app-version');
+    versionElements.forEach(el => {
+      el.textContent = version;
+    });
+  } catch (err) {
+    console.error('Failed to get app version:', err);
   }
 }

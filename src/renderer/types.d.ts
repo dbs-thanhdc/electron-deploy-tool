@@ -1,6 +1,9 @@
 // Type declarations for renderer process
 interface Window {
   api: {
+    // App info
+    getAppVersion: () => Promise<string>;
+
     // Config operations
     loadConfig: () => Promise<any>;
     saveConfig: (config: any) => Promise<{ success: boolean; error?: string }>;
