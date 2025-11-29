@@ -190,6 +190,14 @@
                     <option value="custom">custom</option>
                   </select>
                   <input type="text" id="projectFileContentTemplate" class="form-control" placeholder="File content format..." value="deploy: {env}, {type}" disabled>
+
+                  <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="projectFileContentSmartAppend">
+                      <span>Smart append (append "+" when message is duplicate)</span>
+                    </label>
+                  </div>
+
                   <div class="note-box">
                     <span>Note:</span>
                     <ul>

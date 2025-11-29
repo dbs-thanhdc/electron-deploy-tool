@@ -18,7 +18,8 @@
       "commitFormat": "v1",
       "commitTemplate": "deploy: {env}, {type}",
       "fileContentFormat": "default",
-      "fileContentTemplate": "deploy: {env}, {type}"
+      "fileContentTemplate": "deploy: {env}, {type}",
+      "smartAppend": false
     }
   ]
 }

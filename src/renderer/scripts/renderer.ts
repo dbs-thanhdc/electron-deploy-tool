@@ -438,6 +438,7 @@ function renderProjectsList() {
         <div class="project-detail"><strong>Branch filter:</strong> ${project.branchFilter}</div>
         <div class="project-detail"><strong>Commit Template:</strong> ${project.commitTemplate}</div>
         <div class="project-detail"><strong>File Content Template:</strong> ${project.fileContentTemplate}</div>
+        <div class="project-detail"><strong>Smart Append:</strong> ${project.smartAppend ? "Yes" : "No"}</div>
       </div>
     `;
     container.appendChild(card);
@@ -501,6 +502,7 @@ function editProject(index: number) {
   (document.getElementById("envs") as HTMLInputElement).value = project.envs.join(", ");
   (document.getElementById("deployTypes") as HTMLInputElement).value = project.deployTypes.join(", ");
   (document.getElementById("projectBranchFilter") as HTMLInputElement).value = project.branchFilter;
+  (document.getElementById("projectFileContentSmartAppend") as HTMLInputElement).checked = project.smartAppend || false;
   const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
   commitFormatSelect.value = project.commitFormat || "v1";
 
@@ -554,6 +556,7 @@ async function saveProject() {
   const commitTemplate = (document.getElementById("projectCommitTemplate") as HTMLInputElement).value.trim();
   const fileContentFormat = (document.getElementById("projectFileContentFormat") as HTMLSelectElement).value.trim();
   const fileContentTemplate = (document.getElementById("projectFileContentTemplate") as HTMLInputElement).value.trim();
+  const smartAppendCheck = (document.getElementById("projectFileContentSmartAppend") as HTMLInputElement).checked;
 
   // Validation
   if (!name || !repoPath || !envsStr || !typesStr || (commitFormat === "custom" && !commitTemplate)) {
@@ -585,6 +588,7 @@ async function saveProject() {
     fileContentFormat,
     commitTemplate,
     fileContentTemplate,
+    smartAppend: smartAppendCheck,
   };
 
   if (editingProjectIndex !== null) {

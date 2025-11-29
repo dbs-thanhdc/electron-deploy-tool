@@ -93,6 +93,7 @@ export function registerIpcHandlers(windowManager: WindowManager) {
           if (!project.commitTemplate) project.commitTemplate = 'deploy: {env}, {type}';
           if (!project.fileContentFormat) project.fileContentFormat = 'default';
           if (!project.fileContentTemplate) project.fileContentTemplate = project.commitTemplate;
+          if (project.smartAppend === undefined) project.smartAppend = false;
           return project;
         });
       return scripts;
