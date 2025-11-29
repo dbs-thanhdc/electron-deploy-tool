@@ -6,6 +6,11 @@ contextBridge.exposeInMainWorld('api', {
   // App info
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 
+  // Update operations
+  onUpdateAvailable: (callback: (data: any) => void) => {
+    ipcRenderer.on('update-available', (_event, data) => callback(data));
+  },
+
   // Config operations
   loadConfig: () => ipcRenderer.invoke('load-config'),
   saveConfig: (config: any) => ipcRenderer.invoke('save-config', config),

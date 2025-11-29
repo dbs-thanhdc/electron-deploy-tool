@@ -2,9 +2,11 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, Notification } from 'electro
 import { WindowManager } from './window-manager';
 import { registerIpcHandlers } from './ipc-handlers';
 import path from 'node:path';
+import fs from 'node:fs';
 import { autoUpdater } from 'electron-updater';
 
 let windowManager: WindowManager;
+let mainWindow: BrowserWindow | null = null;
 
 function createMenu() {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -54,37 +56,44 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+function getGitHubConfig(): { owner: string; repo: string } | null {
+  try {
+    const packageJsonPath = path.join(__dirname, '../../package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    
+    const publish = packageJson.build?.publish?.[0];
+    if (publish?.provider === 'github' && publish.owner && publish.repo) {
+      return {
+        owner: publish.owner,
+        repo: publish.repo
+      };
+    }
+  } catch (error) {
+    console.error('Failed to read GitHub config from package.json:', error);
+  }
+  return null;
+}
+
 function initAutoUpdate() {
+  const githubConfig = getGitHubConfig();
   autoUpdater.autoDownload = false;
+  autoUpdater.allowPrerelease = true;
 
-  autoUpdater.on("update-available", () => {
-    const result = dialog.showMessageBoxSync({
-      type: "info",
-      title: "Update Available",
-      message: "A new version is available. Do you want to download it now?",
-      buttons: ["Yes", "No"]
-    });
-
-    if (result === 0) {
-      autoUpdater.downloadUpdate();
+  autoUpdater.on("update-available", (info) => {
+    // Construct GitHub release URL
+    let githubReleaseUrl = '';
+    if (githubConfig) {
+      githubReleaseUrl = `https://github.com/${githubConfig.owner}/${githubConfig.repo}/releases/tag/v${info.version}`;
     }
-  });
 
-  autoUpdater.on("update-downloaded", () => {
-    const result = dialog.showMessageBoxSync({
-      type: "question",
-      title: "Install Update",
-      message: "Update downloaded. Install and restart now?",
-      buttons: ["Yes", "Later"]
-    });
-
-    if (result === 0) {
-      autoUpdater.quitAndInstall();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-available', {
+        version: info.version,
+        releaseNotes: info.releaseNotes || '',
+        releaseDate: info.releaseDate || '',
+        githubReleaseUrl: githubReleaseUrl
+      });
     }
-  });
-
-  autoUpdater.on("error", (error) => {
-    console.error("Auto update error:", error);
   });
 
   autoUpdater.checkForUpdates();
@@ -95,7 +104,7 @@ app.whenReady().then(() => {
   registerIpcHandlers(windowManager);
   createMenu();
   
-  windowManager.createWindow();
+  mainWindow = windowManager.createWindow();
 
   initAutoUpdate();
 
@@ -104,6 +113,11 @@ app.whenReady().then(() => {
       windowManager.createWindow();
     }
   });
+
+  // Check for updates every 4 hours
+  setInterval(() => {
+    autoUpdater.checkForUpdates();
+  }, 4 * 60 * 60 * 1000);
 });
 
 app.on('window-all-closed', () => {
