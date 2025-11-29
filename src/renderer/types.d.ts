@@ -4,6 +4,9 @@ interface Window {
     // App info
     getAppVersion: () => Promise<string>;
 
+    // Update operations
+    onUpdateAvailable: (callback: (data: any) => void) => void;
+
     // Config operations
     loadConfig: () => Promise<any>;
     saveConfig: (config: any) => Promise<{ success: boolean; error?: string }>;

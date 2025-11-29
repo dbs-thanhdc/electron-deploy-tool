@@ -2,6 +2,8 @@
 
 // Initialize all pages
 document.addEventListener("DOMContentLoaded", () => {
+  displayAppVersion();
+  initAutoUpdateHandlers();
   initNavigation();
   initTheme();
   initDeployPage();
@@ -721,7 +723,6 @@ async function selectLogFile(filename: string) {
 // ===== SETTINGS PAGE =====
 async function initSettingsPage() {
   await displayLogDirectory();
-  await displayAppVersion();
 }
 
 async function displayLogDirectory() {
@@ -744,4 +745,69 @@ async function displayAppVersion() {
   } catch (err) {
     console.error('Failed to get app version:', err);
   }
+}
+
+function initAutoUpdateHandlers() {
+  const updateAvailablePopup = document.getElementById('updateAvailablePopup') as HTMLDivElement;
+  const remindLaterBtn = document.getElementById('remindLaterBtn') as HTMLButtonElement;
+  const viewReleaseNotesBtn = document.getElementById('viewReleaseNotesBtn') as HTMLButtonElement;
+  const closeUpdatePopupBtn = document.getElementById('closeUpdatePopupBtn') as HTMLButtonElement;
+
+  let currentUpdateInfo: any = null;
+
+  // Listen for update available event from main process
+  window.api.onUpdateAvailable?.((data: any) => {
+    currentUpdateInfo = data;
+    showUpdateAvailablePopup(data);
+  });
+
+  function showUpdateAvailablePopup(info: any) {
+    updateAvailablePopup.style.display = 'flex';
+    
+    // Update version info
+    const latestVersionText = document.getElementById('latestVersionText') as HTMLElement;
+    if (latestVersionText) {
+      latestVersionText.textContent = info.version || 'Unknown';
+    }
+
+    // Setup GitHub release link
+    const githubReleaseLink = document.getElementById('githubReleaseLink') as HTMLAnchorElement;
+    if (info.githubReleaseUrl) {
+      githubReleaseLink.href = info.githubReleaseUrl;
+      githubReleaseLink.style.display = 'flex';
+    }
+    
+    // Load release notes nếu có
+    if (info.releaseNotes) {
+      const releaseNotesDiv = document.getElementById('updateReleaseNotes') as HTMLDivElement;
+      const releaseNotesContent = document.getElementById('releaseNotesContent') as HTMLDivElement;
+      
+      releaseNotesDiv.style.display = 'block';
+      releaseNotesContent.innerHTML = info.releaseNotes;
+    }
+  }
+
+  // Remind later button
+  remindLaterBtn.addEventListener('click', () => {
+    updateAvailablePopup.style.display = 'none';
+    console.log('User chose to update later');
+  });
+
+  // View release notes button
+  viewReleaseNotesBtn.addEventListener('click', () => {
+    const releaseNotesDiv = document.getElementById('updateReleaseNotes') as HTMLDivElement;
+    
+    if (releaseNotesDiv.style.display === 'none') {
+      releaseNotesDiv.style.display = 'block';
+      viewReleaseNotesBtn.textContent = 'Ẩn chi tiết ↑';
+    } else {
+      releaseNotesDiv.style.display = 'none';
+      viewReleaseNotesBtn.textContent = 'Xem chi tiết →';
+    }
+  });
+
+  // Close button
+  closeUpdatePopupBtn.addEventListener('click', () => {
+    updateAvailablePopup.style.display = 'none';
+  });
 }
