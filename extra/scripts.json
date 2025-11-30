@@ -19,7 +19,8 @@
       "commitTemplate": "deploy: {env}, {type}",
       "fileContentFormat": "default",
       "fileContentTemplate": "deploy: {env}, {type}",
-      "smartAppend": false
+      "smartAppend": false,
+      "cicdFileName": "CICD.txt"
     }
   ]
 }

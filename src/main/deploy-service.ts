@@ -22,7 +22,6 @@ export interface DeployResult {
 }
 
 export class DeployService {
-  private readonly cicdFileName = 'CICD.txt';
   private readonly userDataPath = app.getPath('userData');
   private readonly logDir = path.join(this.userDataPath, 'logs');
 
@@ -135,10 +134,10 @@ export class DeployService {
 
       // Update CICD.txt
       const cicdFileContent = this.getFileContent(fileContentTemplate, env, type);
-      this.updateCICDFile(logs, repoPath, cicdFileContent, project.smartAppend);
+      this.updateCICDFile(logs, project, cicdFileContent);
       
       // Commit
-      if (!this.runCommand(`git add ${this.cicdFileName}`, repoPath, logs)) {
+      if (!this.runCommand(`git add ${project.cicdFileName}`, repoPath, logs)) {
         throw new Error('Git add failed');
       }
       
@@ -167,10 +166,10 @@ export class DeployService {
     }
   }
 
-  updateCICDFile(logs: string[], repoPath: string, commitMsg: string, smartAppend: boolean) {
-    const cicdPath = path.join(repoPath, this.cicdFileName);
+  updateCICDFile(logs: string[], project: ProjectI, commitMsg: string) {
+    const cicdPath = path.join(project.repoPath, project.cicdFileName);
     if (!fs.existsSync(cicdPath)) {
-      throw new Error(`${this.cicdFileName} does not exist in repo`);
+      throw new Error(`${project.cicdFileName} does not exist in repo`);
     }
     const content = fs.readFileSync(cicdPath, 'utf8');
     const lines = content.split(/\r?\n/);
@@ -178,14 +177,14 @@ export class DeployService {
     const updateCommitMsg = (lines: string[], index: number, commitMsg: string) => {
       const line = lines[index];
       const lineBase = line.replace(/\s*\++\s*$/, '').trim();
-      if (!smartAppend || lineBase !== commitMsg.trim()) {
+      if (!project.smartAppend || lineBase !== commitMsg.trim()) {
         // Add new line with commitMsg
-        this.log(`✓ Added to ${this.cicdFileName}: ${commitMsg}`, logs);
+        this.log(`✓ Added to ${project.cicdFileName}: ${commitMsg}`, logs);
         lines.splice(index + 1, 0, commitMsg);
       } else {
         // Append "+" to line
         lines.splice(index, 1, line + '+');
-        this.log(`✓ Appended "+" to existing entry in ${this.cicdFileName}: "${line}" -> "${lines[index]}"`, logs);
+        this.log(`✓ Appended "+" to existing entry in ${project.cicdFileName}: "${line}" -> "${lines[index]}"`, logs);
       }
     }
 

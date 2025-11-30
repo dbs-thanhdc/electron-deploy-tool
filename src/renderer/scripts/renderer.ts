@@ -439,6 +439,7 @@ function renderProjectsList() {
         <div class="project-detail"><strong>Deploy Types:</strong> ${project.deployTypes.join(", ")}</div>
         <div class="project-detail"><strong>Branch filter:</strong> ${project.branchFilter}</div>
         <div class="project-detail"><strong>Commit Template:</strong> ${project.commitTemplate}</div>
+        <div class="project-detail"><strong>CICD File Name:</strong> ${project.cicdFileName}</div>
         <div class="project-detail"><strong>File Content Template:</strong> ${project.fileContentTemplate}</div>
         <div class="project-detail"><strong>Smart Append:</strong> ${project.smartAppend ? "Yes" : "No"}</div>
       </div>
@@ -504,6 +505,7 @@ function editProject(index: number) {
   (document.getElementById("envs") as HTMLInputElement).value = project.envs.join(", ");
   (document.getElementById("deployTypes") as HTMLInputElement).value = project.deployTypes.join(", ");
   (document.getElementById("projectBranchFilter") as HTMLInputElement).value = project.branchFilter;
+  (document.getElementById("projectCICDFileName") as HTMLInputElement).value = project.cicdFileName;
   (document.getElementById("projectFileContentSmartAppend") as HTMLInputElement).checked = project.smartAppend || false;
   const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
   commitFormatSelect.value = project.commitFormat || "v1";
@@ -556,12 +558,13 @@ async function saveProject() {
   const branchFilterStr = (document.getElementById("projectBranchFilter") as HTMLInputElement).value.trim();
   const commitFormat = (document.getElementById("projectCommitFormat") as HTMLSelectElement).value.trim();
   const commitTemplate = (document.getElementById("projectCommitTemplate") as HTMLInputElement).value.trim();
+  const cicdFileName = (document.getElementById("projectCICDFileName") as HTMLInputElement).value.trim();
   const fileContentFormat = (document.getElementById("projectFileContentFormat") as HTMLSelectElement).value.trim();
   const fileContentTemplate = (document.getElementById("projectFileContentTemplate") as HTMLInputElement).value.trim();
   const smartAppendCheck = (document.getElementById("projectFileContentSmartAppend") as HTMLInputElement).checked;
 
   // Validation
-  if (!name || !repoPath || !envsStr || !typesStr || (commitFormat === "custom" && !commitTemplate)) {
+  if (!name || !repoPath || !envsStr || !typesStr || (commitFormat === "custom" && !commitTemplate) || !cicdFileName) {
     alert("All fields are required");
     return;
   }
@@ -589,6 +592,7 @@ async function saveProject() {
     commitFormat,
     fileContentFormat,
     commitTemplate,
+    cicdFileName,
     fileContentTemplate,
     smartAppend: smartAppendCheck,
   };
