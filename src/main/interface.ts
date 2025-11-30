@@ -8,6 +8,8 @@ export interface ProjectI {
   commitTemplate: string;
   fileContentFormat: string;
   fileContentTemplate: string;
+  smartAppend: boolean;
+  cicdFileName: string;
 }
 export interface ConfigI {
   projects: ProjectI[];

@@ -25,6 +25,24 @@ const configDefault = {
   ]
 };
 
+// Get app version from package.json
+function getAppVersion(): string {
+  try {
+    const packagePath = app.isPackaged
+      ? path.join(process.resourcesPath, 'app.asar', 'package.json')
+      : path.join(__dirname, '../../package.json');
+    
+    if (fs.existsSync(packagePath)) {
+      const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      return packageJson.version || '1.0.0';
+    }
+  } catch (err) {
+    console.error('Failed to read version:', err);
+  }
+  return '1.0.0';
+}
+
+
 function getExtraFilePath(filename: string): string {
   const basePath = app.isPackaged
     ? path.join(process.resourcesPath, "extra")
@@ -44,7 +62,11 @@ function getScriptsPath(): string {
 }
 
 export function registerIpcHandlers(windowManager: WindowManager) {
-  
+  // Get app version
+  ipcMain.handle('get-app-version', async () => {
+    return getAppVersion();
+  });
+
   // Load configuration
   ipcMain.handle('load-config', async () => {
     try {
@@ -71,6 +93,8 @@ export function registerIpcHandlers(windowManager: WindowManager) {
           if (!project.commitTemplate) project.commitTemplate = 'deploy: {env}, {type}';
           if (!project.fileContentFormat) project.fileContentFormat = 'default';
           if (!project.fileContentTemplate) project.fileContentTemplate = project.commitTemplate;
+          if (project.smartAppend === undefined) project.smartAppend = false;
+          if (!project.cicdFileName) project.cicdFileName = 'CICD.txt';
           return project;
         });
       return scripts;

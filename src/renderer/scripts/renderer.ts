@@ -2,6 +2,8 @@
 
 // Initialize all pages
 document.addEventListener("DOMContentLoaded", () => {
+  displayAppVersion();
+  initAutoUpdateHandlers();
   initNavigation();
   initTheme();
   initDeployPage();
@@ -437,7 +439,9 @@ function renderProjectsList() {
         <div class="project-detail"><strong>Deploy Types:</strong> ${project.deployTypes.join(", ")}</div>
         <div class="project-detail"><strong>Branch filter:</strong> ${project.branchFilter}</div>
         <div class="project-detail"><strong>Commit Template:</strong> ${project.commitTemplate}</div>
+        <div class="project-detail"><strong>CICD File Name:</strong> ${project.cicdFileName}</div>
         <div class="project-detail"><strong>File Content Template:</strong> ${project.fileContentTemplate}</div>
+        <div class="project-detail"><strong>Smart Append:</strong> ${project.smartAppend ? "Yes" : "No"}</div>
       </div>
     `;
     container.appendChild(card);
@@ -501,6 +505,8 @@ function editProject(index: number) {
   (document.getElementById("envs") as HTMLInputElement).value = project.envs.join(", ");
   (document.getElementById("deployTypes") as HTMLInputElement).value = project.deployTypes.join(", ");
   (document.getElementById("projectBranchFilter") as HTMLInputElement).value = project.branchFilter;
+  (document.getElementById("projectCICDFileName") as HTMLInputElement).value = project.cicdFileName;
+  (document.getElementById("projectFileContentSmartAppend") as HTMLInputElement).checked = project.smartAppend || false;
   const commitFormatSelect = document.getElementById("projectCommitFormat") as HTMLSelectElement;
   commitFormatSelect.value = project.commitFormat || "v1";
 
@@ -552,11 +558,13 @@ async function saveProject() {
   const branchFilterStr = (document.getElementById("projectBranchFilter") as HTMLInputElement).value.trim();
   const commitFormat = (document.getElementById("projectCommitFormat") as HTMLSelectElement).value.trim();
   const commitTemplate = (document.getElementById("projectCommitTemplate") as HTMLInputElement).value.trim();
+  const cicdFileName = (document.getElementById("projectCICDFileName") as HTMLInputElement).value.trim();
   const fileContentFormat = (document.getElementById("projectFileContentFormat") as HTMLSelectElement).value.trim();
   const fileContentTemplate = (document.getElementById("projectFileContentTemplate") as HTMLInputElement).value.trim();
+  const smartAppendCheck = (document.getElementById("projectFileContentSmartAppend") as HTMLInputElement).checked;
 
   // Validation
-  if (!name || !repoPath || !envsStr || !typesStr || (commitFormat === "custom" && !commitTemplate)) {
+  if (!name || !repoPath || !envsStr || !typesStr || (commitFormat === "custom" && !commitTemplate) || !cicdFileName) {
     alert("All fields are required");
     return;
   }
@@ -584,7 +592,9 @@ async function saveProject() {
     commitFormat,
     fileContentFormat,
     commitTemplate,
+    cicdFileName,
     fileContentTemplate,
+    smartAppend: smartAppendCheck,
   };
 
   if (editingProjectIndex !== null) {
@@ -727,4 +737,81 @@ async function displayLogDirectory() {
   } catch (err) {
     console.error("Failed to get log directory:", err);
   }
+}
+
+async function displayAppVersion() {
+  try {
+    const version = await window.api.getAppVersion();
+    const versionElements = document.querySelectorAll('.app-version');
+    versionElements.forEach(el => {
+      el.textContent = version;
+    });
+  } catch (err) {
+    console.error('Failed to get app version:', err);
+  }
+}
+
+function initAutoUpdateHandlers() {
+  const updateAvailablePopup = document.getElementById('updateAvailablePopup') as HTMLDivElement;
+  const remindLaterBtn = document.getElementById('remindLaterBtn') as HTMLButtonElement;
+  const viewReleaseNotesBtn = document.getElementById('viewReleaseNotesBtn') as HTMLButtonElement;
+  const closeUpdatePopupBtn = document.getElementById('closeUpdatePopupBtn') as HTMLButtonElement;
+
+  let currentUpdateInfo: any = null;
+
+  // Listen for update available event from main process
+  window.api.onUpdateAvailable?.((data: any) => {
+    currentUpdateInfo = data;
+    showUpdateAvailablePopup(data);
+  });
+
+  function showUpdateAvailablePopup(info: any) {
+    updateAvailablePopup.style.display = 'flex';
+    
+    // Update version info
+    const latestVersionText = document.getElementById('latestVersionText') as HTMLElement;
+    if (latestVersionText) {
+      latestVersionText.textContent = info.version || 'Unknown';
+    }
+
+    // Setup GitHub release link
+    const githubReleaseLink = document.getElementById('githubReleaseLink') as HTMLAnchorElement;
+    if (info.githubReleaseUrl) {
+      githubReleaseLink.href = info.githubReleaseUrl;
+      githubReleaseLink.style.display = 'flex';
+    }
+    
+    // Load release notes nếu có
+    if (info.releaseNotes) {
+      const releaseNotesDiv = document.getElementById('updateReleaseNotes') as HTMLDivElement;
+      const releaseNotesContent = document.getElementById('releaseNotesContent') as HTMLDivElement;
+      
+      releaseNotesDiv.style.display = 'block';
+      releaseNotesContent.innerHTML = info.releaseNotes;
+    }
+  }
+
+  // Remind later button
+  remindLaterBtn.addEventListener('click', () => {
+    updateAvailablePopup.style.display = 'none';
+    console.log('User chose to update later');
+  });
+
+  // View release notes button
+  viewReleaseNotesBtn.addEventListener('click', () => {
+    const releaseNotesDiv = document.getElementById('updateReleaseNotes') as HTMLDivElement;
+    
+    if (releaseNotesDiv.style.display === 'none') {
+      releaseNotesDiv.style.display = 'block';
+      viewReleaseNotesBtn.textContent = 'Ẩn chi tiết ↑';
+    } else {
+      releaseNotesDiv.style.display = 'none';
+      viewReleaseNotesBtn.textContent = 'Xem chi tiết →';
+    }
+  });
+
+  // Close button
+  closeUpdatePopupBtn.addEventListener('click', () => {
+    updateAvailablePopup.style.display = 'none';
+  });
 }
