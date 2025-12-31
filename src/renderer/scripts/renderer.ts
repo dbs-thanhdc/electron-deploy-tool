@@ -757,11 +757,8 @@ function initAutoUpdateHandlers() {
   const viewReleaseNotesBtn = document.getElementById('viewReleaseNotesBtn') as HTMLButtonElement;
   const closeUpdatePopupBtn = document.getElementById('closeUpdatePopupBtn') as HTMLButtonElement;
 
-  let currentUpdateInfo: any = null;
-
   // Listen for update available event from main process
   window.api.onUpdateAvailable?.((data: any) => {
-    currentUpdateInfo = data;
     showUpdateAvailablePopup(data);
   });
 

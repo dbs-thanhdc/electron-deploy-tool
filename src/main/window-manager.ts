@@ -7,7 +7,7 @@ export class WindowManager {
 
   createWindow(): BrowserWindow {
     const win = new BrowserWindow({
-      width: 1200,
+      width: 1000,
       height: 800,
       minWidth: 1000,
       minHeight: 600,
