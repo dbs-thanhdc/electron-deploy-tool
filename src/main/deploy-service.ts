@@ -22,7 +22,6 @@ export interface DeployResult {
 }
 
 export class DeployService {
-  private readonly cicdFileName = 'CICD.txt';
   private readonly userDataPath = app.getPath('userData');
   private readonly logDir = path.join(this.userDataPath, 'logs');
 
@@ -135,11 +134,10 @@ export class DeployService {
 
       // Update CICD.txt
       const cicdFileContent = this.getFileContent(fileContentTemplate, env, type);
-      this.updateCICDFile(repoPath, cicdFileContent);
-      this.log(`✓ Added to ${this.cicdFileName}: ${cicdFileContent}`, logs);
+      this.updateCICDFile(logs, project, cicdFileContent);
       
       // Commit
-      if (!this.runCommand(`git add ${this.cicdFileName}`, repoPath, logs)) {
+      if (!this.runCommand(`git add ${project.cicdFileName}`, repoPath, logs)) {
         throw new Error('Git add failed');
       }
       
@@ -168,25 +166,39 @@ export class DeployService {
     }
   }
 
-  updateCICDFile(repoPath: string, commitMsg: string) {
-    const cicdPath = path.join(repoPath, this.cicdFileName);
+  updateCICDFile(logs: string[], project: ProjectI, commitMsg: string) {
+    const cicdPath = path.join(project.repoPath, project.cicdFileName);
     if (!fs.existsSync(cicdPath)) {
-      throw new Error(`${this.cicdFileName} does not exist in repo`);
+      throw new Error(`${project.cicdFileName} does not exist in repo`);
     }
     const content = fs.readFileSync(cicdPath, 'utf8');
     const lines = content.split(/\r?\n/);
+
+    const updateCommitMsg = (lines: string[], index: number, commitMsg: string) => {
+      const line = lines[index];
+      const lineBase = line.replace(/\s*\++\s*$/, '').trim();
+      if (!project.smartAppend || lineBase !== commitMsg.trim()) {
+        // Add new line with commitMsg
+        this.log(`✓ Added to ${project.cicdFileName}: ${commitMsg}`, logs);
+        lines.splice(index + 1, 0, commitMsg);
+      } else {
+        // Append "+" to line
+        lines.splice(index, 1, line + '+');
+        this.log(`✓ Appended "+" to existing entry in ${project.cicdFileName}: "${line}" -> "${lines[index]}"`, logs);
+      }
+    }
 
     // File empty
     if (lines.length === 1 && lines[0] === '') {
       fs.writeFileSync(cicdPath, commitMsg);
     } else {
       const lastLine = lines.at(-1) as string;
+      // Remove existing "+" from lastLine for comparison
       if (lastLine.trim() === '') {
-        // Nếu dòng cuối là dòng trống → thêm ngay phía trên dòng trống đó
-        lines.splice(-1, 0, commitMsg);
+        // Last line is empty, just add new line
+        updateCommitMsg(lines, lines.length - 2, commitMsg);
       } else {
-        // Nếu dòng cuối có nội dung → thêm dòng mới ở cuối file
-        lines.push(commitMsg);
+        updateCommitMsg(lines, lines.length - 1, commitMsg);
       }
       fs.writeFileSync(cicdPath, lines.join('\n'));
     }
