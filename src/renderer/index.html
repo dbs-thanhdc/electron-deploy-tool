@@ -6,6 +6,7 @@
   <title>Deploy Tool</title>
   <link rel="stylesheet" href="styles/themes.css">
   <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/holiday-theme.css">
 </head>
 <body class="dark-theme">
   <div class="app-container">
@@ -39,6 +40,14 @@
             <span class="toggle-slider"></span>
           </label>
           <span class="toggle-label">Dark Mode</span>
+        </div>
+        
+        <div class="background-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="backgroundToggle">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Background</span>
         </div>
       </div>
     </aside>
@@ -361,5 +370,6 @@
 
   <!-- TypeScript compiled to JavaScript -->
   <script src="../../dist/renderer/scripts/renderer.js"></script>
+  <script src="../../dist/renderer/scripts/holiday-theme-manager.js"></script>
 </body>
 </html>

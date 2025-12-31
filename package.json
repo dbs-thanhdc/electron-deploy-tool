@@ -64,6 +64,10 @@
     },
     "extraResources": [
       {
+        "from": "assets",
+        "to": "assets"
+      },
+      {
         "from": "extra/",
         "to": "extra/",
         "filter": [
