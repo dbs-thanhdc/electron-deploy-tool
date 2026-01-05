@@ -225,4 +225,19 @@ export function registerIpcHandlers(windowManager: WindowManager) {
 
     return result.filePaths[0];
   });
+
+  ipcMain.handle('load-holidays-config', async () => {
+    try {
+      const holidaysPath = getExtraFilePath('holidays-config.json'); 
+      if (fs.existsSync(holidaysPath)) {
+        const config = fs.readFileSync(holidaysPath, 'utf8');
+        return JSON.parse(config);
+      } else {
+        return { holidays: [] };
+      }
+    } catch (err: any) {
+      console.error('Error loading holidays config:', err);
+      return { holidays: [] };
+    }
+  });
 }

@@ -57,4 +57,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // File system
   openDirectoryDialog: () => ipcRenderer.invoke('open-directory-dialog'),
+
+  // Holidays
+  loadHolidaysConfig: () => ipcRenderer.invoke('load-holidays-config'),
 });

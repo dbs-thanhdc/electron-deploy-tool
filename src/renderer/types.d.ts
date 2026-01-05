@@ -37,5 +37,8 @@ interface Window {
 
     // File system
     openDirectoryDialog: () => Promise<string | null>;
+
+    // Holidays
+    loadHolidaysConfig: () => Promise<any>;
   };
 }
