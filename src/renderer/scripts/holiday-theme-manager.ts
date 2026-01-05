@@ -58,8 +58,7 @@ class HolidayThemeManager {
    */
   private async loadConfig(): Promise<void> {
     try {
-      const response = await fetch("../../extra/holidays-config.json");
-      this.config = await response.json();
+      this.config = await window.api.loadHolidaysConfig();
     } catch (error) {
       console.error("Failed to load holidays config:", error);
       throw error;
